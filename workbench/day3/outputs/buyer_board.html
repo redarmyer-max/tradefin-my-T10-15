@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>바이어 리스크 한눈에</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#F6F6F4;--surface:#FFFFFF;--border:#E3E3DF;--text:#1C1C1A;--muted:#5E615C;--accent:#0F5F63;--bar:#8F918C;--grade-s:#2E7D32;--grade-a:#8A9A1B;--grade-b:#E0A100;--grade-c:#C0392B;--font:'Noto Sans KR', sans-serif;--fs-1:12px;--fs-2:14px;--fs-3:16px;--fs-4:20px;--fs-5:28px;--fs-6:40px;--lh-tight:1.2;--lh-body:1.5;--sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;--sp-5:24px;--sp-6:32px;--sp-7:48px;--radius:6px;--shadow:none;--content-max:1200px;--card-min:160px;}
+*{box-sizing:border-box;margin:0;padding:0}
+html{-webkit-text-size-adjust:100%}
+body{background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-3);
+  line-height:var(--lh-body);word-break:keep-all;overflow-wrap:break-word}
+.wrap{max-width:var(--content-max);margin:0 auto;padding:var(--sp-7)}
+.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.muted{color:var(--muted)}
+h1{font-size:var(--fs-5);line-height:var(--lh-tight);font-weight:700;color:var(--text)}
+h2{font-size:var(--fs-4);line-height:var(--lh-tight);font-weight:700;color:var(--text);margin-bottom:var(--sp-4)}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:var(--sp-5)}
+section{margin-top:var(--sp-7)}
+
+/* 머리 */
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-4);flex-wrap:wrap}
+.head p{font-size:var(--fs-2);color:var(--muted);margin-top:var(--sp-2)}
+.asof{font-size:var(--fs-2);color:var(--muted)}
+
+/* KPI */
+.kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-5);margin-top:var(--sp-6)}
+.kpi .label{font-size:var(--fs-2);color:var(--muted);font-weight:500}
+.kpi .value{display:block;overflow:hidden;font-size:var(--fs-6);line-height:var(--lh-tight);font-weight:700;color:var(--text);margin-top:var(--sp-1)}
+.kpi .sub{font-size:var(--fs-2);color:var(--muted);margin-top:var(--sp-1)}
+
+/* 등급 분포 + 슬라이더 */
+.dist{display:grid;grid-template-columns:minmax(0,2fr) minmax(0,1fr);gap:var(--sp-6)}
+.gbar{display:flex;height:var(--sp-5);border-radius:var(--radius);overflow:hidden;background:var(--border)}
+.gbar span{display:block;height:100%}
+.gbar span+span{border-left:1px solid var(--surface)}
+.legend{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-4);margin-top:var(--sp-4)}
+.legend .row{display:flex;flex-direction:column;align-items:flex-start;gap:var(--sp-1)}
+.legend .cnt{font-size:var(--fs-4);font-weight:700;color:var(--text);line-height:var(--lh-tight)}
+.legend .amt{font-size:var(--fs-2);color:var(--muted)}
+.badge{display:inline-block;font-size:var(--fs-1);font-weight:700;line-height:var(--lh-body);
+  padding:0 var(--sp-2);border-radius:var(--radius);white-space:nowrap}
+.g-S{background:var(--grade-s);color:var(--surface)}
+.g-A{background:var(--grade-a);color:var(--text)}
+.g-B{background:var(--grade-b);color:var(--text)}
+.g-C{background:var(--grade-c);color:var(--surface)}
+.line-top{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2)}
+.line-top label{font-size:var(--fs-2);font-weight:500;color:var(--text)}
+.line-val{font-size:var(--fs-5);font-weight:700;color:var(--accent);line-height:var(--lh-tight)}
+input[type=range]{width:100%;accent-color:var(--accent);margin-top:var(--sp-3)}
+.ends{display:flex;justify-content:space-between;font-size:var(--fs-1);color:var(--muted)}
+.delta{font-size:var(--fs-2);color:var(--text);margin-top:var(--sp-3);font-weight:500}
+.rule{font-size:var(--fs-1);color:var(--muted);margin-top:var(--sp-2)}
+
+/* 이번 주 할 일 · 대표님이 정할 것 */
+.brief{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-6)}
+.brief ol{list-style:none;display:flex;flex-direction:column;gap:var(--sp-3)}
+.brief li{display:flex;gap:var(--sp-2);font-size:var(--fs-2);color:var(--text)}
+.brief li b{font-weight:700;color:var(--accent);flex:none}
+.note{font-size:var(--fs-1);color:var(--muted);margin-top:var(--sp-4)}
+
+/* 위험 상위 10 지역 지도 */
+.map{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--sp-3);
+  grid-template-areas:"na we ce ea" "na me me sa"}
+.tile{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-3);min-width:0}
+.tile-head{display:flex;justify-content:space-between;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;margin-bottom:var(--sp-3)}
+.tile-name{font-size:var(--fs-2);font-weight:700;color:var(--text)}
+.tile-sum{font-size:var(--fs-1);color:var(--muted)}
+.tile-empty{font-size:var(--fs-1);color:var(--muted)}
+.tile-cards{list-style:none;display:grid;grid-template-columns:repeat(auto-fill,minmax(var(--card-min),1fr));gap:var(--sp-3)}
+.bcard{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-3);min-width:0}
+.b-top{display:flex;justify-content:space-between;align-items:flex-start;gap:var(--sp-2)}
+.b-name{font-size:var(--fs-2);font-weight:700;color:var(--text)}
+.b-meta{font-size:var(--fs-1);color:var(--muted);margin-top:var(--sp-1)}
+.b-amt{display:flex;align-items:baseline;gap:var(--sp-2);flex-wrap:wrap;margin-top:var(--sp-2)}
+.b-ar{font-size:var(--fs-4);font-weight:700;color:var(--text);line-height:var(--lh-tight)}
+.b-od{font-size:var(--fs-1);color:var(--text)}
+.b-sig{list-style:none;margin-top:var(--sp-2);padding-top:var(--sp-2);border-top:1px solid var(--border);display:flex;flex-direction:column;gap:var(--sp-1)}
+.b-sig li{font-size:var(--fs-1);color:var(--muted)}
+.b-sig li b{display:block;font-weight:500;color:var(--text)}
+
+footer{margin-top:var(--sp-7);padding-top:var(--sp-4);border-top:1px solid var(--border);font-size:var(--fs-1);color:var(--muted)}
+
+@media (max-width:720px){
+  .wrap{padding:var(--sp-6) var(--sp-4)}
+  section{margin-top:var(--sp-6)}
+  .card{padding:var(--sp-4)}
+  .kpis{grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-3);margin-top:var(--sp-5)}
+  .kpi .value{font-size:var(--fs-5)}
+  .dist{grid-template-columns:minmax(0,1fr);gap:var(--sp-5)}
+  .legend{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .brief{grid-template-columns:minmax(0,1fr);gap:var(--sp-5)}
+  .map{grid-template-columns:minmax(0,1fr);grid-template-areas:"na" "we" "ce" "me" "ea" "sa"}
+  .tile-cards{grid-template-columns:minmax(0,1fr)}
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="head">
+    <div>
+      <h1>바이어 리스크 한눈에</h1>
+      <p>(가상) 한빛정밀(주) 바이어 150곳 · 합성 데이터</p>
+    </div>
+    <div class="asof">기준일 <span class="num">2026-09-30</span></div>
+  </header>
+
+  <div class="kpis" aria-label="핵심 숫자">
+    <div class="card kpi"><div class="label">위험 바이어</div><div class="value num fit" id="k-c-n"></div><div class="sub" id="k-c-n-sub"></div></div>
+    <div class="card kpi"><div class="label">C등급 채권</div><div class="value num fit" id="k-c-ar"></div><div class="sub" id="k-c-ar-sub"></div></div>
+    <div class="card kpi"><div class="label">전체 채권</div><div class="value num fit" id="k-ar"></div><div class="sub" id="k-ar-sub"></div></div>
+    <div class="card kpi"><div class="label">연체 금액</div><div class="value num fit" id="k-od"></div><div class="sub" id="k-od-sub"></div></div>
+  </div>
+
+  <section class="card" aria-label="이번 주 할 일과 대표님이 정할 것">
+    <div class="brief">
+      <div><h2>이번 주 할 일</h2><ol id="actions"></ol></div>
+      <div><h2>대표님이 정할 것</h2><ol id="decisions"></ol></div>
+    </div>
+    <p class="note">표의 숫자로 만든 초안입니다. 위험 선을 움직이면 숫자가 같이 바뀝니다. 최종 판단은 우리 팀이 합니다.</p>
+  </section>
+
+  <section class="card dist" aria-label="신호등 등급 분포와 위험 선">
+    <div>
+      <h2>신호등 등급 분포</h2>
+      <div class="gbar" id="gbar" role="img"></div>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div>
+      <div class="line-top"><label for="line">위험 선</label><span class="line-val num" id="line-val"></span></div>
+      <input type="range" id="line" min="5" max="30" step="1" value="17" aria-describedby="delta">
+      <div class="ends"><span class="num">5%</span><span class="num">30%</span></div>
+      <p class="delta" id="delta"></p>
+      <p class="rule">위험 점수가 선 이상이면 C, 선의 절반 이상이면 B, 4분의 1 이상이면 A, 나머지는 S입니다.</p>
+    </div>
+  </section>
+
+  <section class="card" aria-label="C등급 채권 상위 나라 지도">
+    <h2>C등급 채권 상위 10개 나라 · 지도</h2>
+    <div class="map" id="map"></div>
+    <p class="note">금액은 지금 선에서 C등급인 바이어의 채권을 나라별로 더한 값(크게)과 그 연체입니다. 칸 아래는 그 나라 C등급 바이어와 위험 신호입니다. 이 신호들은 확인해 볼 이유이지, 연체의 원인이라는 뜻은 아닙니다.</p>
+  </section>
+
+  <footer>(가상) 합성 데이터 · 기준일 <span class="num">2026-09-30</span> · 위험 점수는 판단을 돕는 값이고 결정은 사람이 합니다</footer>
+</div>
+
+<script type="application/json" id="board-data">{"asOf":"2026-09-30","defaultLine":17,"topCountries":10,"buyers":[{"id":"B001","name":"Camano Meettechniek B.V.","country":"네덜란드","region":"서유럽","pay":"외상(O/A)","ar":27052,"od":0,"pd":0.0089,"sig":["최근 6개월 결제의 80%가 늦음",null,null]},{"id":"B002","name":"Hefei Belum Machinery Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":10070,"od":0,"pd":0.0045,"sig":["최근 1년 분쟁 비율 29%",null,null]},{"id":"B003","name":"PT Delyn Instrumen Nusantara","country":"인도네시아","region":"동남아·남아","pay":"인수인도(D/A)","ar":0,"od":0,"pd":0.009,"sig":["최근 1년 분쟁 비율 29%","최근 6개월 결제의 50%가 늦음",null]},{"id":"B004","name":"Eldum Automation S.A.E.","country":"이집트","region":"중동·아프리카","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B005","name":"Xanolin Distribution Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"외상(O/A)","ar":346360,"od":19920,"pd":0.1483,"sig":["최근 6개월 결제의 100%가 늦음","연체 금액 $19,920","최근 1년 분쟁 비율 32%"]},{"id":"B006","name":"Zarum Machinery Sdn. Bhd.","country":"말레이시아","region":"동남아·남아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0034,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B007","name":"Quineth Handel B.V.","country":"네덜란드","region":"서유럽","pay":"외상(O/A)","ar":3021,"od":0,"pd":0.0096,"sig":["최근 6개월 결제의 67%가 늦음",null,null]},{"id":"B008","name":"Uleon Anlagenbau GmbH","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":9211,"od":7809,"pd":0.3707,"sig":["지급 지연이 늘어나는 중(+31일)","최근 1년 분쟁 비율 40%","31일 넘은 채권이 85%"]},{"id":"B009","name":"Suzhou Delaro Supply Co., Ltd.","country":"중국","region":"동아시아","pay":"인수인도(D/A)","ar":57457,"od":0,"pd":0.0048,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B010","name":"Gorion Handel Sp. z o.o.","country":"폴란드","region":"중동부유럽","pay":"사전 송금","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B011","name":"Fenolin Utilities Ltd.","country":"인도","region":"동남아·남아","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B012","name":"PT Varasta Sarana Industri","country":"인도네시아","region":"동남아·남아","pay":"지급인도(D/P)","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B013","name":"Tianjin Wenum Manufacturing Co., Ltd.","country":"중국","region":"동아시아","pay":"사전 송금","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B014","name":"Briion Projects Corp.","country":"미국","region":"북미·중남미","pay":"기한부 신용장","ar":29910,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B015","name":"Pelant Automation Co., Ltd.","country":"대만","region":"동아시아","pay":"인수인도(D/A)","ar":7680,"od":0,"pd":0.0044,"sig":["최근 1년 분쟁 비율 33%",null,null]},{"id":"B016","name":"Galova Machinery Ltd.","country":"인도","region":"동남아·남아","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0034,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B017","name":"Corasta Instruments S.A.E.","country":"이집트","region":"중동·아프리카","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0076,"sig":["최근 6개월 결제의 100%가 늦음","최근 1년 평균 24일 늦게 지급",null]},{"id":"B018","name":"Corari Industrie B.V.","country":"네덜란드","region":"서유럽","pay":"외상(O/A)","ar":2531,"od":0,"pd":0.004,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B019","name":"Saryn Machinery Inc.","country":"미국","region":"북미·중남미","pay":"인수인도(D/A)","ar":0,"od":0,"pd":0.0077,"sig":["최근 1년 평균 31일 늦게 지급","최근 6개월 결제의 50%가 늦음",null]},{"id":"B020","name":"Velida Machinery Est.","country":"사우디아라비아","region":"중동·아프리카","pay":"송금 30% 선급 · 70% 후급","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B021","name":"Xiamen Rinant Engineering Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":80211,"od":0,"pd":0.0044,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B022","name":"PT Kavrendo Instrumen Nusantara","country":"인도네시아","region":"동남아·남아","pay":"외상(O/A)","ar":72360,"od":4330,"pd":0.0449,"sig":["최근 1년 분쟁 비율 43%","지급 지연이 늘어나는 중(+13일)","연체 금액 $4,330"]},{"id":"B023","name":"PT Morora Teknik Indonesia","country":"인도네시아","region":"동남아·남아","pay":"인수인도(D/A)","ar":22410,"od":0,"pd":0.0103,"sig":["최근 6개월 결제의 57%가 늦음",null,null]},{"id":"B024","name":"Praum Outlets Inc.","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B025","name":"Junant Anlagenbau AG","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":1562,"od":0,"pd":0.0045,"sig":["최근 1년 분쟁 비율 25%",null,null]},{"id":"B026","name":"Nelova Engineering (Thailand) Co., Ltd.","country":"태국","region":"동남아·남아","pay":"외상(O/A)","ar":4860,"od":0,"pd":0.0037,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B027","name":"Ralant Water Services Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"사전 송금","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B028","name":"Davura Kogyo Co., Ltd.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":225799,"od":0,"pd":0.0055,"sig":["최근 1년 분쟁 비율 25%",null,null]},{"id":"B029","name":"Dongguan Tarella Engineering Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":88940,"od":0,"pd":0.0111,"sig":["지급 지연이 늘어나는 중(+19일)","최근 6개월 결제의 73%가 늦음","최근 1년 평균 26일 늦게 지급"]},{"id":"B030","name":"Calaro Endüstriyel Ölçüm A.Ş.","country":"튀르키예","region":"중동부유럽","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0111,"sig":["최근 6개월 결제의 60%가 늦음",null,null]},{"id":"B031","name":"Kalaro Industrial S.A. de C.V.","country":"멕시코","region":"북미·중남미","pay":"외상(O/A)","ar":70120,"od":19200,"pd":0.6935,"sig":["지급 지연이 늘어나는 중(+29일)","가장 오래된 미결이 36일째","연체 금액 $19,200"]},{"id":"B032","name":"Nilora Water & Wastewater Authority","country":"이집트","region":"중동·아프리카","pay":"외상(O/A)","ar":0,"od":0,"pd":0.005,"sig":["최근 1년 분쟁 비율 33%",null,null]},{"id":"B033","name":"Calum Contracting JSC","country":"베트남","region":"동남아·남아","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B034","name":"Helvara Humanitarian Supply Agency","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":11491,"od":0,"pd":0.0052,"sig":["최근 1년 분쟁 비율 25%",null,null]},{"id":"B035","name":"Rinella Distribution Co., Ltd.","country":"대만","region":"동아시아","pay":"사전 송금","ar":17800,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B036","name":"Quinano Trading JSC","country":"베트남","region":"동남아·남아","pay":"사전 송금","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B037","name":"Bexova Industries Est.","country":"사우디아라비아","region":"중동·아프리카","pay":"인수인도(D/A)","ar":14770,"od":0,"pd":0.005,"sig":["최근 1년 분쟁 비율 27%",null,null]},{"id":"B038","name":"Varix Anlagenbau GmbH","country":"독일","region":"서유럽","pay":"사전 송금","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B039","name":"Zaryn Industries Est.","country":"사우디아라비아","region":"중동·아프리카","pay":"송금 30% 선급 · 70% 후급","ar":0,"od":0,"pd":0.0049,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B040","name":"Loreth Environmental Services Ltd.","country":"인도","region":"동남아·남아","pay":"기한부 신용장","ar":49220,"od":0,"pd":0.0041,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B041","name":"Davant Endüstriyel Ölçüm Ltd. Şti.","country":"튀르키예","region":"중동부유럽","pay":"외상(O/A)","ar":42560,"od":11210,"pd":0.3284,"sig":["연체 금액 $11,210","가장 오래된 미결이 3일째","최근 1년 분쟁 비율 26%"]},{"id":"B042","name":"Velix Comércio Ltda.","country":"브라질","region":"북미·중남미","pay":"사전 송금","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B043","name":"Changzhou Bexum Environmental Services Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":25123,"od":0,"pd":0.0048,"sig":["최근 1년 분쟁 비율 38%",null,null]},{"id":"B044","name":"Quinasta Manufacturing (Thailand) Co., Ltd.","country":"태국","region":"동남아·남아","pay":"인수인도(D/A)","ar":13330,"od":13330,"pd":0.0532,"sig":["최근 1년 평균 263일 늦게 지급","가장 오래된 미결이 355일째","31일 넘은 채권이 100%"]},{"id":"B045","name":"Wenora General Trading FZCO","country":"아랍에미리트","region":"중동·아프리카","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0039,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B046","name":"Interagency Water Relief Office","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0033,"sig":["최근 1년 평균 25일 늦게 지급",null,null]},{"id":"B047","name":"Corost Comercializadora S.A. de C.V.","country":"멕시코","region":"북미·중남미","pay":"외상(O/A)","ar":54540,"od":27300,"pd":0.6739,"sig":["연체 금액 $27,300","가장 오래된 미결이 48일째","31일 넘은 채권이 36%"]},{"id":"B048","name":"Changzhou Wenant Engineering Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":24530,"od":24530,"pd":0.7699,"sig":["최근 1년 분쟁 비율 50%","가장 오래된 미결이 90일째","31일 넘은 채권이 100%"]},{"id":"B049","name":"Lumasta Engineering LLC","country":"아랍에미리트","region":"중동·아프리카","pay":"인수인도(D/A)","ar":50700,"od":2820,"pd":0.0328,"sig":["최근 6개월 결제의 100%가 늦음","지급 지연이 늘어나는 중(+31일)","가장 오래된 미결이 61일째"]},{"id":"B050","name":"Korolin Instruments LLC","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":70360,"od":0,"pd":0.0103,"sig":["최근 6개월 결제의 79%가 늦음","최근 1년 평균 28일 늦게 지급",null]},{"id":"B051","name":"Dorora Engineering Inc.","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0078,"sig":["지급 지연이 늘어나는 중(+13일)","최근 6개월 결제의 60%가 늦음",null]},{"id":"B052","name":"Mekora Water Infrastructure PMU","country":"베트남","region":"동남아·남아","pay":"일람불 신용장","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B053","name":"Davix Industrietechnik AG","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":81567,"od":0,"pd":0.013,"sig":["최근 30일 부정적인 뉴스가 많음","지급 지연이 늘어나는 중(+36일)","최근 6개월 결제의 75%가 늦음"]},{"id":"B054","name":"Waterschap Velmar-Oost","country":"네덜란드","region":"서유럽","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0089,"sig":["최근 1년 분쟁 비율 40%",null,null]},{"id":"B055","name":"Tulvarra Water Services LLC","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0057,"sig":["최근 1년 평균 60일 늦게 지급","최근 1년 분쟁 비율 50%",null]},{"id":"B056","name":"Quinari Instruments Inc.","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":50380,"od":0,"pd":0.0106,"sig":["지급 지연이 늘어나는 중(+6일)",null,null]},{"id":"B057","name":"Calant Projects Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"기한부 신용장","ar":137350,"od":0,"pd":0.0055,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B058","name":"Jemsolka Supply Sdn. Bhd.","country":"말레이시아","region":"동남아·남아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0053,"sig":["최근 1년 분쟁 비율 29%",null,null]},{"id":"B059","name":"PT Sarida Sarana Industri","country":"인도네시아","region":"동남아·남아","pay":"외상(O/A)","ar":40560,"od":4980,"pd":0.4139,"sig":["지급 지연이 늘어나는 중(+36일)","가장 오래된 미결이 70일째","최근 6개월 결제의 83%가 늦음"]},{"id":"B060","name":"PT Korida Instrumen Nusantara","country":"인도네시아","region":"동남아·남아","pay":"사전 송금","ar":0,"od":0,"pd":0.0034,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B061","name":"Ulia Projects Pvt. Ltd.","country":"인도","region":"동남아·남아","pay":"인수인도(D/A)","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B062","name":"Galeth Instruments LLC","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":35660,"od":18310,"pd":0.5549,"sig":["연체 금액 $18,310","지급 지연이 늘어나는 중(+14일)","가장 오래된 미결이 12일째"]},{"id":"B063","name":"Tianjin Corolin Outlets Co., Ltd.","country":"중국","region":"동아시아","pay":"사전 송금","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B064","name":"Belost Trading Inc.","country":"미국","region":"북미·중남미","pay":"송금 30% 선급 · 70% 후급","ar":27216,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B065","name":"Indavara Rural Water Programme PIU","country":"인도","region":"동남아·남아","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B066","name":"Marano Home & Lab Stores FZE","country":"아랍에미리트","region":"중동·아프리카","pay":"인수인도(D/A)","ar":80550,"od":10610,"pd":0.5416,"sig":["최근 30일 부정적인 뉴스가 많음","연체 금액 $10,610","가장 오래된 미결이 6일째"]},{"id":"B067","name":"Briano Instrumentação S.A.","country":"브라질","region":"북미·중남미","pay":"지급인도(D/P)","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B068","name":"Belion Automation (Thailand) Co., Ltd.","country":"태국","region":"동남아·남아","pay":"외상(O/A)","ar":118530,"od":0,"pd":0.0184,"sig":["최근 6개월 결제의 86%가 늦음","최근 1년 평균 30일 늦게 지급","지급 지연이 늘어나는 중(+10일)"]},{"id":"B069","name":"Vasbrelko Machinery LLC","country":"아랍에미리트","region":"중동·아프리카","pay":"외상(O/A)","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B070","name":"Tarolin Przemysł Sp. z o.o.","country":"폴란드","region":"중동부유럽","pay":"외상(O/A)","ar":8413,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B071","name":"Briost Engineering Co., Ltd.","country":"대만","region":"동아시아","pay":"외상(O/A)","ar":65000,"od":65000,"pd":0.0946,"sig":["연체 금액 $65,000","최근 1년 평균 196일 늦게 지급","가장 오래된 미결이 269일째"]},{"id":"B072","name":"Halano Handelsgesellschaft GmbH","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":9679,"od":0,"pd":0.013,"sig":["지급 지연이 늘어나는 중(+16일)","최근 1년 분쟁 비율 33%","최근 1년 평균 28일 늦게 지급"]},{"id":"B073","name":"Praix Industrial Ltda.","country":"브라질","region":"북미·중남미","pay":"외상(O/A)","ar":48270,"od":48270,"pd":0.3354,"sig":["연체 금액 $48,270","가장 오래된 미결이 19일째","지급 지연이 늘어나는 중(+6일)"]},{"id":"B074","name":"Corant Projects Sdn. Bhd.","country":"말레이시아","region":"동남아·남아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0067,"sig":["최근 1년 평균 22일 늦게 지급",null,null]},{"id":"B075","name":"Tovera Messtechnik GmbH","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":5369,"od":5369,"pd":0.2615,"sig":["지급 지연이 늘어나는 중(+60일)","최근 1년 평균 73일 늦게 지급","31일 넘은 채권이 100%"]},{"id":"B076","name":"Dorura Handel Sp. z o.o.","country":"폴란드","region":"중동부유럽","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0062,"sig":["최근 1년 분쟁 비율 75%",null,null]},{"id":"B077","name":"Briari Contracting JSC","country":"베트남","region":"동남아·남아","pay":"지급인도(D/P)","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B078","name":"Kalost Manufacturing Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"송금 30% 선급 · 70% 후급","ar":7882,"od":0,"pd":0.0088,"sig":["최근 1년 평균 28일 늦게 지급","최근 6개월 결제의 67%가 늦음",null]},{"id":"B079","name":"Nelera Kogyo Co., Ltd.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":43358,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B080","name":"Lorida Shoji K.K.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":20034,"od":0,"pd":0.0062,"sig":["최근 1년 분쟁 비율 43%",null,null]},{"id":"B081","name":"Marida Keisoku Co., Ltd.","country":"일본","region":"동아시아","pay":"기한부 신용장","ar":0,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B082","name":"Tesvirel Keisoku K.K.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":41640,"od":0,"pd":0.006,"sig":["지급 지연이 늘어나는 중(+9일)",null,null]},{"id":"B083","name":"Oroari Industries LLC","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":2200,"od":2200,"pd":0.0416,"sig":["가장 오래된 미결이 305일째","31일 넘은 채권이 100%","연체 금액 $2,200"]},{"id":"B084","name":"Korari Handel Sp. z o.o.","country":"폴란드","region":"중동부유럽","pay":"외상(O/A)","ar":39889,"od":0,"pd":0.0107,"sig":["최근 1년 분쟁 비율 38%","최근 1년 평균 29일 늦게 지급","최근 6개월 결제의 50%가 늦음"]},{"id":"B085","name":"Corida Trading LLC","country":"아랍에미리트","region":"중동·아프리카","pay":"외상(O/A)","ar":211500,"od":40500,"pd":0.1734,"sig":["연체 금액 $40,500","가장 오래된 미결이 22일째","최근 1년 평균 22일 늦게 지급"]},{"id":"B086","name":"Oroasta Handelsgesellschaft AG","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":188197,"od":0,"pd":0.0045,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B087","name":"Yorura Outlets Corp.","country":"대만","region":"동아시아","pay":"송금 30% 선급 · 70% 후급","ar":113072,"od":49855,"pd":0.202,"sig":["연체 금액 $49,855","가장 오래된 미결이 32일째","31일 넘은 채권이 17%"]},{"id":"B088","name":"Tareon Contracting LLC","country":"미국","region":"북미·중남미","pay":"사전 송금","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B089","name":"Morost Automation Ltd","country":"나이지리아","region":"중동·아프리카","pay":"일람불 신용장","ar":760,"od":0,"pd":0.0034,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B090","name":"Calova Automation Inc.","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":7550,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B091","name":"Lorion Handel B.V.","country":"네덜란드","region":"서유럽","pay":"인수인도(D/A)","ar":4583,"od":0,"pd":0.0039,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B092","name":"Eldolin Przemysł Sp. z o.o.","country":"폴란드","region":"중동부유럽","pay":"송금 30% 선급 · 70% 후급","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B093","name":"Orunde State Water Board","country":"나이지리아","region":"중동·아프리카","pay":"외상(O/A)","ar":88060,"od":0,"pd":0.0127,"sig":["지급 지연이 늘어나는 중(+20일)","최근 6개월 결제의 67%가 늦음","최근 1년 평균 20일 늦게 지급"]},{"id":"B094","name":"Korora Manufacturing Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"외상(O/A)","ar":13030,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B095","name":"Bexura Industries S.A.E.","country":"이집트","region":"중동·아프리카","pay":"외상(O/A)","ar":9150,"od":0,"pd":0.0076,"sig":["최근 6개월 결제의 100%가 늦음","최근 1년 평균 36일 늦게 지급","최근 1년 분쟁 비율 30%"]},{"id":"B096","name":"Marova Trading Inc.","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":25450,"od":0,"pd":0.0041,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B097","name":"Tahrava Water Authority","country":"사우디아라비아","region":"중동·아프리카","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B098","name":"Zenyn Outlets Ltd.","country":"인도","region":"동남아·남아","pay":"외상(O/A)","ar":70150,"od":0,"pd":0.0094,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B099","name":"Helura Endüstriyel Ölçüm Ltd. Şti.","country":"튀르키예","region":"중동부유럽","pay":"인수인도(D/A)","ar":0,"od":0,"pd":0.0029,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B100","name":"Falella Manufacturing (Thailand) Co., Ltd.","country":"태국","region":"동남아·남아","pay":"송금 30% 선급 · 70% 후급","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B101","name":"Goraro Engineering Pvt. Ltd.","country":"인도","region":"동남아·남아","pay":"인수인도(D/A)","ar":50800,"od":0,"pd":0.014,"sig":["최근 6개월 결제의 100%가 늦음",null,null]},{"id":"B102","name":"Kalant Machinery plc","country":"영국","region":"서유럽","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0046,"sig":["최근 1년 평균 44일 늦게 지급",null,null]},{"id":"B103","name":"Teveth Distribution Co.","country":"사우디아라비아","region":"중동·아프리카","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B104","name":"Sarant Ingeniería S.A. de C.V.","country":"멕시코","region":"북미·중남미","pay":"외상(O/A)","ar":10190,"od":10190,"pd":0.4373,"sig":["연체 금액 $10,190","가장 오래된 미결이 5일째","최근 6개월 결제의 67%가 늦음"]},{"id":"B105","name":"Zenano Shoji K.K.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":23400,"od":0,"pd":0.0107,"sig":["최근 1년 분쟁 비율 56%","최근 1년 평균 51일 늦게 지급","최근 6개월 결제의 100%가 늦음"]},{"id":"B106","name":"Ivoari Makina Ltd. Şti.","country":"튀르키예","region":"중동부유럽","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0035,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B107","name":"Gemvelund Anlagenbau GmbH","country":"독일","region":"서유럽","pay":"외상(O/A)","ar":35180,"od":0,"pd":0.0057,"sig":["최근 1년 평균 24일 늦게 지급",null,null]},{"id":"B108","name":"Nelella Distribution JSC","country":"베트남","region":"동남아·남아","pay":"외상(O/A)","ar":98060,"od":0,"pd":0.0049,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B109","name":"Ralova Home & Lab Stores Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B110","name":"Dorova Trading Corp.","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":24020,"od":0,"pd":0.0071,"sig":["최근 1년 평균 21일 늦게 지급",null,null]},{"id":"B111","name":"Kervuvar Retail Co., Ltd.","country":"대만","region":"동아시아","pay":"인수인도(D/A)","ar":32470,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B112","name":"Morasta Industrial S.A. de C.V.","country":"멕시코","region":"북미·중남미","pay":"송금 30% 선급 · 70% 후급","ar":0,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B113","name":"Ralora Kogyo K.K.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":9015,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B114","name":"Quinera Keisoku Co., Ltd.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0039,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B115","name":"Shenzhen Quinida Contracting Co., Ltd.","country":"중국","region":"동아시아","pay":"인수인도(D/A)","ar":11608,"od":0,"pd":0.0042,"sig":["지급 지연이 늘어나는 중(+4일)",null,null]},{"id":"B116","name":"Halera Instruments Ltd","country":"영국","region":"서유럽","pay":"외상(O/A)","ar":1590,"od":0,"pd":0.004,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B117","name":"Shenzhen Velari Machinery Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":13050,"od":0,"pd":0.0046,"sig":["최근 1년 분쟁 비율 25%",null,null]},{"id":"B118","name":"Tevura Automation Inc.","country":"미국","region":"북미·중남미","pay":"인수인도(D/A)","ar":20060,"od":20060,"pd":0.7032,"sig":["지급 지연이 늘어나는 중(+30일)","최근 1년 분쟁 비율 40%","연체 금액 $20,060"]},{"id":"B119","name":"Galost Automation Ltd.","country":"인도","region":"동남아·남아","pay":"인수인도(D/A)","ar":48780,"od":21910,"pd":0.3832,"sig":["연체 금액 $21,910","가장 오래된 미결이 10일째","최근 1년 분쟁 비율 30%"]},{"id":"B120","name":"Oroora Sangyo K.K.","country":"일본","region":"동아시아","pay":"외상(O/A)","ar":11484,"od":0,"pd":0.0049,"sig":["최근 1년 분쟁 비율 29%",null,null]},{"id":"B121","name":"Ulida Outlets Pvt. Ltd.","country":"인도","region":"동남아·남아","pay":"인수인도(D/A)","ar":92040,"od":0,"pd":0.0078,"sig":["최근 1년 평균 35일 늦게 지급",null,null]},{"id":"B122","name":"Velova Keisoku K.K.","country":"일본","region":"동아시아","pay":"인수인도(D/A)","ar":13100,"od":0,"pd":0.0029,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B123","name":"Goreth Inżynieria Sp. z o.o.","country":"폴란드","region":"중동부유럽","pay":"외상(O/A)","ar":57171,"od":14638,"pd":0.1633,"sig":["지급 지연이 늘어나는 중(+27일)","연체 금액 $14,638","가장 오래된 미결이 27일째"]},{"id":"B124","name":"Dongguan Wenura Automation Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":17166,"od":0,"pd":0.003,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B125","name":"Zarant Instrumentación S.A. de C.V.","country":"멕시코","region":"북미·중남미","pay":"인수인도(D/A)","ar":0,"od":0,"pd":0.0034,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B126","name":"Yoreth Manufacturing Ltd","country":"영국","region":"서유럽","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0037,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B127","name":"Tevella Automation Co., Ltd.","country":"베트남","region":"동남아·남아","pay":"지급인도(D/P)","ar":80140,"od":0,"pd":0.0078,"sig":["최근 1년 평균 20일 늦게 지급",null,null]},{"id":"B128","name":"Briella Manufacturing plc","country":"영국","region":"서유럽","pay":"외상(O/A)","ar":82360,"od":0,"pd":0.0043,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B129","name":"Xiamen Xanyn Trading Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0078,"sig":["최근 6개월 결제의 100%가 늦음","최근 1년 분쟁 비율 25%",null]},{"id":"B130","name":"Marasta Ticaret Ltd. Şti.","country":"튀르키예","region":"중동부유럽","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0035,"sig":["최근 30일 부정적인 뉴스가 많음",null,null]},{"id":"B131","name":"Tarera Automation Nigeria Ltd","country":"나이지리아","region":"중동·아프리카","pay":"일람불 신용장","ar":0,"od":0,"pd":0.0032,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B132","name":"PT Quineon Instrumen Nusantara","country":"인도네시아","region":"동남아·남아","pay":"외상(O/A)","ar":19970,"od":0,"pd":0.0049,"sig":["최근 1년 분쟁 비율 29%",null,null]},{"id":"B133","name":"Oroyn Distribution LLC","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":16360,"od":0,"pd":0.0044,"sig":["최근 1년 분쟁 비율 25%",null,null]},{"id":"B134","name":"Camolin Instrumentación S.A. de C.V.","country":"멕시코","region":"북미·중남미","pay":"외상(O/A)","ar":93460,"od":59200,"pd":0.7092,"sig":["연체 금액 $59,200","최근 1년 평균 48일 늦게 지급","가장 오래된 미결이 74일째"]},{"id":"B135","name":"Zarix Ticaret Ltd. Şti.","country":"튀르키예","region":"중동부유럽","pay":"외상(O/A)","ar":5520,"od":0,"pd":0.0108,"sig":["지급 지연이 늘어나는 중(+6일)","최근 6개월 결제의 60%가 늦음",null]},{"id":"B136","name":"Xanora Industrietechnik GmbH","country":"독일","region":"서유럽","pay":"인수인도(D/A)","ar":0,"od":0,"pd":0.0062,"sig":["최근 1년 분쟁 비율 50%",null,null]},{"id":"B137","name":"Ivoion Distribution LLC","country":"아랍에미리트","region":"중동·아프리카","pay":"사전 송금","ar":0,"od":0,"pd":0.007,"sig":["최근 6개월 결제의 100%가 늦음","최근 1년 평균 26일 늦게 지급",null]},{"id":"B138","name":"Shenzhen Gulvresko Contracting Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":8911,"od":0,"pd":0.0047,"sig":["최근 1년 분쟁 비율 29%",null,null]},{"id":"B139","name":"Varant Handelsgesellschaft AG","country":"독일","region":"서유럽","pay":"인수인도(D/A)","ar":43012,"od":0,"pd":0.0044,"sig":["최근 1년 분쟁 비율 25%",null,null]},{"id":"B140","name":"Kalora Machinery LLC","country":"미국","region":"북미·중남미","pay":"외상(O/A)","ar":139350,"od":23290,"pd":0.2623,"sig":["연체 금액 $23,290","가장 오래된 미결이 27일째","지급 지연이 늘어나는 중(+3일)"]},{"id":"B141","name":"Briera Messtechnik GmbH","country":"독일","region":"서유럽","pay":"인수인도(D/A)","ar":37324,"od":0,"pd":0.0033,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B142","name":"Peleth Instruments Ltd.","country":"인도","region":"동남아·남아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0051,"sig":["최근 6개월 결제의 100%가 늦음","최근 1년 평균 36일 늦게 지급",null]},{"id":"B143","name":"Nelost Industries Sdn. Bhd.","country":"말레이시아","region":"동남아·남아","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0046,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B144","name":"Camost Ticaret Ltd. Şti.","country":"튀르키예","region":"중동부유럽","pay":"외상(O/A)","ar":25040,"od":1840,"pd":0.0598,"sig":["최근 6개월 결제의 100%가 늦음","가장 오래된 미결이 15일째","최근 1년 분쟁 비율 31%"]},{"id":"B145","name":"Varano Home & Lab Stores plc","country":"영국","region":"서유럽","pay":"사전 송금","ar":0,"od":0,"pd":0.0069,"sig":["최근 6개월 결제의 67%가 늦음",null,null]},{"id":"B146","name":"Ivoost Industrial Ltda.","country":"브라질","region":"북미·중남미","pay":"외상(O/A)","ar":8570,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B147","name":"Falia Home & Lab Stores (Thailand) Co., Ltd.","country":"태국","region":"동남아·남아","pay":"인수인도(D/A)","ar":33520,"od":33520,"pd":0.063,"sig":["가장 오래된 미결이 381일째","31일 넘은 채권이 100%","연체 금액 $33,520"]},{"id":"B148","name":"Rovella Water Services FZE","country":"아랍에미리트","region":"중동·아프리카","pay":"외상(O/A)","ar":88190,"od":0,"pd":0.0096,"sig":["최근 1년 분쟁 비율 32%",null,null]},{"id":"B149","name":"Changzhou Briasta Distribution Co., Ltd.","country":"중국","region":"동아시아","pay":"외상(O/A)","ar":10966,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]},{"id":"B150","name":"Yorova Machinery plc","country":"영국","region":"서유럽","pay":"외상(O/A)","ar":0,"od":0,"pd":0.0031,"sig":["눈에 띄는 위험 신호 없음",null,null]}],"top10":["B048","B134","B118","B031","B047","B062","B066","B104","B059","B119"],"tiles":[{"region":"북미·중남미","area":"na"},{"region":"서유럽","area":"we"},{"region":"중동부유럽","area":"ce"},{"region":"중동·아프리카","area":"me"},{"region":"동아시아","area":"ea"},{"region":"동남아·남아","area":"sa"}]}</script>
+<script>
+(function(){
+  var D = JSON.parse(document.getElementById('board-data').textContent);
+  var B = D.buyers, byId = {};
+  B.forEach(function(b){ byId[b.id] = b; });
+  var G = ['S','A','B','C'];
+  var FS = ['--fs-6','--fs-5','--fs-4','--fs-3','--fs-2'];
+
+  function gradeFor(p, linePct){        // board_page.py의 grade_for와 같다(C부터 검사)
+    var line = linePct / 100;
+    if (p >= line) return 'C';
+    if (p >= line / 2) return 'B';
+    if (p >= line / 4) return 'A';
+    return 'S';
+  }
+  function usd(n){ return '$' + Math.round(n).toLocaleString('en-US'); }
+  function signedUsd(n){ return (n < 0 ? '−' : '+') + usd(Math.abs(n)); }
+  function signedN(n){ return (n < 0 ? '−' : '+') + Math.abs(n); }
+  function pct(x){ return (x * 100).toFixed(1) + '%'; }
+  function esc(s){ return s == null ? '–' : String(s).replace(/[&<>"]/g, function(c){
+    return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function badge(g){ return '<span class="badge g-' + g + '">' + g + '</span>'; }
+
+  function summarize(linePct){
+    var s = {n:{S:0,A:0,B:0,C:0}, ar:{S:0,A:0,B:0,C:0}, total:0, od:0, odN:0, grade:{}, payC:{}, ctyAr:{}, cty:{}};
+    B.forEach(function(b){
+      var g = gradeFor(b.pd, linePct);
+      s.grade[b.id] = g; s.n[g]++; s.ar[g] += b.ar; s.total += b.ar;
+      s.od += b.od; if (b.od > 0) s.odN++;
+      s.ctyAr[b.country] = (s.ctyAr[b.country] || 0) + b.ar;
+      if (g === 'C'){
+        s.payC[b.pay] = (s.payC[b.pay] || 0) + 1;
+        var c = s.cty[b.country] || (s.cty[b.country] = {name:b.country, region:b.region, ar:0, n:0, od:0, buyers:[]});
+        c.ar += b.ar; c.n++; c.od += b.od; c.buyers.push(b);
+      }
+    });
+    // C등급 채권 상위 나라: C등급 채권 많은 순, 같으면 나라 이름 순(board_page.py의 country_rank와 같다)
+    s.rank = Object.keys(s.cty).map(function(k){ return s.cty[k]; }).sort(function(a, b){
+      return b.ar - a.ar || (a.name < b.name ? -1 : 1);
+    }).slice(0, D.topCountries);
+    s.rank.forEach(function(c, i){
+      c.rank = i + 1;
+      c.buyers.sort(function(a, b){ return b.pd - a.pd || (a.id < b.id ? -1 : 1); });
+    });
+    return s;
+  }
+  var base = summarize(D.defaultLine);
+
+  // 위험 상위 10 묶음(선과 무관) — 채권 · 연체 합, 나라별 곳 수
+  var T = D.top10.map(function(id){ return byId[id]; });
+  var tAr = 0, tOd = 0, tCty = {};
+  T.forEach(function(b){
+    tAr += b.ar; tOd += b.od;
+    var r = tCty[b.country] || (tCty[b.country] = {n:0, ar:0});
+    r.n++; r.ar += b.ar;
+  });
+  // 상위 10이 가장 많은 나라: 곳 수 → 채권 → 이름 순
+  var tTop = Object.keys(tCty).sort(function(a, b){
+    return tCty[b].n - tCty[a].n || tCty[b].ar - tCty[a].ar || (a < b ? -1 : 1);
+  })[0];
+  function li(i, html){ return '<li><b class="num">' + i + '.</b><span>' + html + '</span></li>'; }
+
+  function fit(){                      // 숫자가 칸보다 길면 한 단계씩 줄인다(줄 바꿈 대신)
+    var root = getComputedStyle(document.documentElement);
+    var px = FS.map(function(v){ return parseFloat(root.getPropertyValue(v)); });
+    var els = [].slice.call(document.querySelectorAll('.fit')), step = 0;
+    els.forEach(function(el){
+      el.style.fontSize = '';
+      var i = px.indexOf(parseFloat(getComputedStyle(el).fontSize));
+      if (i < 0) i = 0;
+      while (el.scrollWidth > el.clientWidth && i < FS.length - 1){ i++; el.style.fontSize = 'var(' + FS[i] + ')'; }
+      step = Math.max(step, i);
+    });
+    // KPI 4칸은 같은 크기로 맞춘다(가장 많이 줄인 칸에 맞춤)
+    els.forEach(function(el){ el.style.fontSize = 'var(' + FS[step] + ')'; });
+  }
+
+  function render(linePct){
+    var s = summarize(linePct);
+    document.getElementById('line-val').textContent = linePct + '%';
+
+    // KPI
+    document.getElementById('k-c-n').textContent = s.n.C + '곳';
+    document.getElementById('k-c-n-sub').textContent = 'C등급 · 위험 선 ' + linePct + '%';
+    document.getElementById('k-c-ar').textContent = usd(s.ar.C);
+    document.getElementById('k-c-ar-sub').textContent = '전체 채권의 ' + (s.total ? (s.ar.C / s.total * 100).toFixed(1) : '0.0') + '%';
+    document.getElementById('k-ar').textContent = usd(s.total);
+    document.getElementById('k-ar-sub').textContent = B.length + '곳';
+    document.getElementById('k-od').textContent = usd(s.od);
+    document.getElementById('k-od-sub').textContent = s.odN + '곳에서 연체';
+
+    // 등급 분포
+    var bar = '', leg = '';
+    G.forEach(function(g){
+      var w = s.n[g] / B.length * 100;
+      if (s.n[g] > 0) bar += '<span class="g-' + g + '" style="width:' + w + '%"></span>';
+      leg += '<div class="row">' + badge(g) + '<span class="cnt num">' + s.n[g] + '곳</span><span class="amt num">' + usd(s.ar[g]) + '</span></div>';
+    });
+    var gbar = document.getElementById('gbar');
+    gbar.innerHTML = bar;
+    gbar.setAttribute('aria-label', G.map(function(g){ return g + '등급 ' + s.n[g] + '곳'; }).join(', '));
+    document.getElementById('legend').innerHTML = leg;
+
+    // 처음 17%와 견준 차이
+    var dn = s.n.C - base.n.C, da = s.ar.C - base.ar.C;
+    document.getElementById('delta').textContent =
+      '처음 ' + D.defaultLine + '%보다 C등급 ' + signedN(dn) + '곳 · ' + signedUsd(da);
+
+    // 이번 주 할 일 3
+    var tC = T.filter(function(b){ return s.grade[b.id] === 'C'; }).length;
+    document.getElementById('actions').innerHTML =
+      li(1, '위험 상위 10곳에 전화해 결제 계획을 확인합니다. 채권 <span class="num">' + usd(tAr) + '</span> · 연체 <span class="num">' + usd(tOd) +
+        '</span>이고, 지금 선에서 이 중 C등급은 <span class="num">' + tC + '곳</span>입니다.') +
+      li(2, '상위 10곳이 가장 많은 나라 ' + esc(tTop) + ' <span class="num">' + tCty[tTop].n + '곳</span>(채권 <span class="num">' +
+        usd(tCty[tTop].ar) + '</span>)의 연체 상황을 먼저 확인합니다.') +
+      li(3, '연체가 있는 <span class="num">' + s.odN + '곳</span>(<span class="num">' + usd(s.od) + '</span>)의 회수 일정을 확인합니다.');
+
+    // 대표님이 정할 것 3
+    var d1;
+    if (linePct > 5){
+      var lo = summarize(linePct - 1);
+      d1 = '위험 선을 <span class="num">' + linePct + '%</span>로 둘지 정합니다. 1%p 낮추면 C등급 <span class="num">' +
+        signedN(lo.n.C - s.n.C) + '곳 · ' + signedUsd(lo.ar.C - s.ar.C) + '</span>입니다.';
+    } else {
+      d1 = '위험 선을 <span class="num">5%</span>로 둘지 정합니다. 지금이 가장 낮은 선입니다.';
+    }
+    var pays = Object.keys(s.payC).sort(function(a, b){ return s.payC[b] - s.payC[a] || (a < b ? -1 : 1); });
+    var d2 = s.n.C
+      ? 'C등급 <span class="num">' + s.n.C + '곳</span>과의 결제 조건을 지금대로 둘지 정합니다. 지금 조건은 ' +
+        pays.map(function(p){ return esc(p) + ' <span class="num">' + s.payC[p] + '곳</span>'; }).join(', ') + '입니다.'
+      : '지금 선에서는 C등급이 없어 결제 조건을 다시 볼 곳이 없습니다.';
+    var c1 = s.rank[0];
+    var d3 = c1
+      ? 'C등급 채권이 가장 많은 나라 ' + esc(c1.name) + '의 C등급 채권 <span class="num">' + usd(c1.ar) + '</span>(그 나라 채권의 <span class="num">' +
+        (c1.ar / s.ctyAr[c1.name] * 100).toFixed(1) + '%</span>)을 어떻게 다룰지 정합니다.'
+      : '지금 선에서는 C등급 채권이 있는 나라가 없습니다.';
+    document.getElementById('decisions').innerHTML = li(1, d1) + li(2, d2) + li(3, d3);
+
+    // C등급 채권 상위 나라 지도 — 지역 칸은 위치 틀이고, 금액은 나라 카드에만
+    var map = '';
+    D.tiles.forEach(function(t){
+      var inT = s.rank.filter(function(c){ return c.region === t.region; });
+      map += '<div class="tile" style="grid-area:' + t.area + '">' +
+        '<div class="tile-head"><span class="tile-name">' + esc(t.region) + '</span></div>';
+      if (!inT.length){ map += '<p class="tile-empty">상위 ' + D.topCountries + '개 나라 없음</p></div>'; return; }
+      map += '<ul class="tile-cards">';
+      inT.forEach(function(c){
+        map += '<li class="bcard"><div class="b-top"><span class="b-name">' + esc(c.name) + '</span>' +
+          '<span class="b-meta num">' + c.rank + '위</span></div>' +
+          '<div class="b-amt"><span class="b-ar num">' + usd(c.ar) + '</span><span class="b-od">연체 <span class="num">' + usd(c.od) + '</span></span></div>' +
+          '<div class="b-meta">' + badge('C') + ' <span class="num">' + c.n + '곳</span></div>' +
+          '<ul class="b-sig">' + c.buyers.map(function(b){
+            var sig = b.sig.filter(function(v){ return v != null && v !== ''; });
+            return '<li><b>' + esc(b.name) + '</b>' + sig.map(esc).join(' / ') + '</li>';
+          }).join('') + '</ul></li>';
+      });
+      map += '</ul></div>';
+    });
+    document.getElementById('map').innerHTML = map;
+
+    fit();
+  }
+
+  var slider = document.getElementById('line');
+  slider.addEventListener('input', function(){ render(parseInt(slider.value, 10)); });
+  window.addEventListener('resize', fit);
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(fit);
+  render(parseInt(slider.value, 10));
+})();
+</script>
+</body>
+</html>
